@@ -1,0 +1,13 @@
+## Interface: 110005, 110007, 110100
+## Title: Advance Custom Tools
+## Author: Isogi, Jaf
+## Notes: Advance Custom Tools
+## SavedVariables: ACTDB
+## Version: 09941
+## IconTexture: Interface\AddOns\ACT\media\MiniMap.tga
+## OptionalDeps: ElvUI, WeakAuras, Cell, Grid2
+embeds.xml
+API.lua
+NicknameString.lua
+Core.lua
+Nickname.lua
