@@ -26,10 +26,9 @@ function NicknameModule:CreateConfigPanel(parent)
     importBox:SetAutoFocus(false)
     self.importBox = importBox
 
-    local importButton = CreateFrame("Button", nil, configPanel, "UIPanelButtonTemplate")
-    importButton:SetSize(120, 30)
+    local importButton = UI:CreateButton(configPanel, "Import", 120, 30)
     importButton:SetPoint("TOPLEFT", importBox, "BOTTOMLEFT", 0, -10)
-    importButton:SetText("Import")
+
     importButton:SetScript("OnClick", function()
         local text = importBox:GetText()
         if text and text ~= "" then
@@ -42,8 +41,20 @@ function NicknameModule:CreateConfigPanel(parent)
 
     local integrationCheckbox = CreateFrame("CheckButton", nil, configPanel, "UICheckButtonTemplate")
     integrationCheckbox:SetPoint("LEFT", importButton, "RIGHT", 20, 0)
-    integrationCheckbox.text:SetText("Use Nickname Integration for Party/Raid Frames")
+    integrationCheckbox:SetSize(22, 22) 
+
+    integrationCheckbox:SetNormalTexture("Interface\\Buttons\\UI-CheckBox-Up")
+    integrationCheckbox:SetPushedTexture("Interface\\Buttons\\UI-CheckBox-Down")
+    integrationCheckbox:SetHighlightTexture("Interface\\Buttons\\UI-CheckBox-Highlight", "ADD")
+    integrationCheckbox:SetCheckedTexture("Interface\\Buttons\\UI-CheckBox-Check")
+
+    integrationCheckbox.Text:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE")
+    integrationCheckbox.Text:SetText("Show nicknames on Party/Raid Frames & MRT Raid CDs")
+    integrationCheckbox.Text:ClearAllPoints()
+    integrationCheckbox.Text:SetPoint("LEFT", integrationCheckbox, "RIGHT", 5, 0)
+
     integrationCheckbox:SetChecked(ACT.db.profile.useNicknameIntegration)
+
     integrationCheckbox:SetScript("OnClick", function(self)
         local checked = self:GetChecked()
         ACT.db.profile.useNicknameIntegration = checked
@@ -75,10 +86,8 @@ function NicknameModule:CreateConfigPanel(parent)
     scrollFrame:SetScrollChild(scrollChild)
     self.scrollChild = scrollChild
 
-    local defaultButton = CreateFrame("Button", nil, configPanel, "UIPanelButtonTemplate")
-    defaultButton:SetSize(150, 30)
+    local defaultButton = UI:CreateButton(configPanel, "Default Nicknames", 120, 30)
     defaultButton:SetPoint("TOPLEFT", scrollFrame, "BOTTOMLEFT", 0, -15)
-    defaultButton:SetText("Default Nicknames")
     defaultButton:SetScript("OnClick", function()
         StaticPopupDialogs["ACT_CONFIRM_WIPE_DEFAULT"] = {
             text = "Are you sure you want to reset to the default nicknames?\n\nThis will remove all your current nicknames.",
@@ -123,51 +132,52 @@ function NicknameModule:RefreshContent()
     local yOffset = -10
     for _, nickname in ipairs(sortedNicknames) do
         local data = nicknamesMap[nickname]
-        local row = CreateFrame("Frame", nil, self.scrollChild)
+        local row = CreateFrame("Frame", nil, self.scrollChild, "BackdropTemplate")
         row:SetSize(520, 30)
         row:SetPoint("TOPLEFT", self.scrollChild, "TOPLEFT", 0, yOffset)
 
+        row:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1
+        })
+        row:SetBackdropColor(0.15, 0.15, 0.15, 1)
+        row:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        label:SetPoint("LEFT", row, "LEFT", 0, 0)
-        label:SetSize(100, 30)
+        label:SetPoint("LEFT", row, "LEFT", 5, 0)
+        label:SetSize(150, 30)
         label:SetJustifyH("LEFT")
         label:SetText(nickname)
 
-        local dropdown = CreateFrame("Frame", nil, row, "UIDropDownMenuTemplate")
+        local dropdown = UI:CreateDropdown(row, 200, 30)
         dropdown:SetPoint("LEFT", row, "LEFT", 110, 0)
-        dropdown:SetSize(200, 30)
-        UIDropDownMenu_SetWidth(dropdown, 200)
-        UIDropDownMenu_SetText(dropdown, "Select Character")
+        
+        local options = {}
+        local list = NicknameModule:GetCharacterList(nickname)
+        for _, v in pairs(list) do
+            table.insert(options, {
+                text = v,
+                value = v,
+                onClick = function()
+                    dropdown.selectedValue = v
+                    dropdown.button.text:SetText(v)
+                end
+            })
+        end
+        UI:SetDropdownOptions(dropdown, options)
+        
+        dropdown.button.text:SetText("Select Character")
         dropdown.selectedValue = nil
-
-        local function Dropdown_OnClick(self)
-            UIDropDownMenu_SetSelectedID(dropdown, self:GetID())
-            dropdown.selectedValue = self.value
-            UIDropDownMenu_SetText(dropdown, self.value)
-        end
-
-        local function Initialize_DropDown(self, level)
-            local info = UIDropDownMenu_CreateInfo()
-            local list = NicknameModule:GetCharacterList(nickname)
-            for _, v in pairs(list) do
-                info = UIDropDownMenu_CreateInfo()
-                info.text = v
-                info.value = v
-                info.func = Dropdown_OnClick
-                UIDropDownMenu_AddButton(info, level)
-            end
-        end
-        UIDropDownMenu_Initialize(dropdown, Initialize_DropDown)
 
         local actionsFrame = CreateFrame("Frame", nil, row)
         actionsFrame:SetSize(170, 30)
         actionsFrame:SetPoint("LEFT", row, "LEFT", 330, 0)
         actionsFrame:SetPoint("CENTER", row, "CENTER", 0, 0)
 
-        local addBtn = CreateFrame("Button", nil, actionsFrame, "UIPanelButtonTemplate")
-        addBtn:SetSize(50, 20)
-        addBtn:SetPoint("LEFT", actionsFrame, "LEFT", 20, 3)
-        addBtn:SetText("Add")
+        local addBtn = UI:CreateButton(actionsFrame, "Add", 50, 20)
+        addBtn:SetPoint("LEFT", actionsFrame, "LEFT", 20, 0)
+
         addBtn:SetScript("OnClick", function()
             NicknameModule:ShowCharacterInputPopup(nickname, nil, function(characterName)
                 if not ACT.db.profile.nicknames[nickname] then
@@ -179,10 +189,9 @@ function NicknameModule:RefreshContent()
             end)
         end)
 
-        local editBtn = CreateFrame("Button", nil, actionsFrame, "UIPanelButtonTemplate")
-        editBtn:SetSize(50, 20)
+        local editBtn = UI:CreateButton(actionsFrame, "Edit", 50, 20)
         editBtn:SetPoint("LEFT", addBtn, "RIGHT", 5, 0)
-        editBtn:SetText("Edit")
+
         editBtn:SetScript("OnClick", function()
             if dropdown.selectedValue then
                 NicknameModule:ShowCharacterInputPopup(nickname, dropdown.selectedValue, function(newName)
@@ -202,10 +211,9 @@ function NicknameModule:RefreshContent()
             end
         end)
 
-        local deleteBtn = CreateFrame("Button", nil, actionsFrame, "UIPanelButtonTemplate")
-        deleteBtn:SetSize(60, 20)
+        local deleteBtn = UI:CreateButton(actionsFrame, "Delete", 50, 20)
         deleteBtn:SetPoint("LEFT", editBtn, "RIGHT", 5, 0)
-        deleteBtn:SetText("Delete")
+
         deleteBtn:SetScript("OnClick", function()
             if dropdown.selectedValue then
                 if ACT.db.profile.nicknames[nickname] and ACT.db.profile.nicknames[nickname].characters then

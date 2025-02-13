@@ -273,56 +273,81 @@ if WeakAuras then
 end
 
 -- Cell
-local function EnhancedUpdateCellNicknames()
+local function UpdateCellNicknames()
     if not C_AddOns.IsAddOnLoaded("Cell") then return end
 
     if not (ACT and ACT.db and ACT.db.profile and ACT.db.profile.useNicknameIntegration) then
+        if CellDB and CellDB.nicknames and CellDB.nicknames.list then
+            local managedCharacters = {}
+            local nicknameData = NicknameAPI:GetAllNicknames()
+            for _, data in pairs(nicknameData) do
+                if data.characters then
+                    for _, charData in ipairs(data.characters) do
+                        if charData.character then
+                            managedCharacters[charData.character] = true
+                        end
+                    end
+                end
+            end
+
+            for i = #CellDB.nicknames.list, 1, -1 do
+                local character = CellDB.nicknames.list[i]:match("^([^:]+):")
+                if managedCharacters[character] then
+                    local entry = CellDB.nicknames.list[i]
+                    table.remove(CellDB.nicknames.list, i)
+                    if Cell then
+                        local name = entry:match("^([^:]+)")
+                        Cell:Fire("UpdateNicknames", "list-update", name, nil)
+                    end
+                end
+            end
+        end
         return
     end
 
-    CellDB.nicknames = CellDB.nicknames or {}
-    CellDB.nicknames.list = CellDB.nicknames.list or {}
-    CellDB.nicknames.custom = true
-
-    local ourManagedCharacters = {}
-    local entriesToRemove = {}
+    if not CellDB or not CellDB.nicknames then return end
 
     local nicknameData = NicknameAPI:GetAllNicknames()
-    for nickname, data in pairs(nicknameData) do
-        if data.characters then
-            for _, charData in ipairs(data.characters) do
-                if charData.character then
-                    ourManagedCharacters[charData.character] = true
-                end
-            end
-        end
-    end
-
+    
+    local currentEntries = {}
     for i, entry in ipairs(CellDB.nicknames.list) do
-        local character = strsplit(":", entry)
-        if ourManagedCharacters[character] then
-            table.insert(entriesToRemove, i)
+        local character, nickname = entry:match("^([^:]+):(.+)$")
+        if character then
+            currentEntries[character] = {
+                index = i,
+                nickname = nickname
+            }
         end
-    end
-
-    table.sort(entriesToRemove, function(a, b) return a > b end)
-    for _, index in ipairs(entriesToRemove) do
-        table.remove(CellDB.nicknames.list, index)
     end
 
     for nickname, data in pairs(nicknameData) do
         if data.characters then
             for _, charData in ipairs(data.characters) do
                 if charData.character then
-                    table.insert(CellDB.nicknames.list, charData.character .. ":" .. nickname)
+                    local current = currentEntries[charData.character]
+                    local newEntry = string.format("%s:%s", charData.character, nickname)
+                    
+                    if current then
+                        if current.nickname ~= nickname then
+                            CellDB.nicknames.list[current.index] = newEntry
+                            Cell:Fire("UpdateNicknames", "list-update", charData.character, nickname)
+                        end
+                        currentEntries[charData.character] = nil
+                    else
+                        table.insert(CellDB.nicknames.list, newEntry)
+                        Cell:Fire("UpdateNicknames", "list-update", charData.character, nickname)
+                    end
                 end
             end
         end
     end
 
-    if Cell.funcs and Cell.funcs.UpdateNicknames then
-        Cell.funcs.UpdateNicknames()
+    for character, data in pairs(currentEntries) do
+        table.remove(CellDB.nicknames.list, data.index)
+        Cell:Fire("UpdateNicknames", "list-update", character, nil)
     end
+
+    CellDB.nicknames.custom = true
 end
 
 -- ElvUI
@@ -531,18 +556,36 @@ local function UpdateDefaultFrames()
     C_Timer.After(0.1, UpdateAllFrames)
 end
 
+-- MRT cooldown bars
+local function InitializeMRT()
+    if not C_AddOns.IsAddOnLoaded("MRT") or not GMRT or not GMRT.F then return end
+    
+    GMRT.F:RegisterCallback("RaidCooldowns_Bar_TextName", function(_, _, gsubData)
+        if not (ACT and ACT.db and ACT.db.profile and ACT.db.profile.useNicknameIntegration) then
+            return
+        end
+        if gsubData and gsubData.name then
+            gsubData.name = NicknameAPI:GetNicknameByCharacter(gsubData.name) or gsubData.name
+        end
+    end)
+end
+
+-- Load shit
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 initFrame:RegisterEvent("ADDON_LOADED")
 
 initFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "PLAYER_ENTERING_WORLD" and firstLoad ~= "1" then
-        EnhancedUpdateCellNicknames()
+        UpdateCellNicknames()
         UpdateDefaultFrames()
+        InitializeMRT()
         firstLoad = "1"
     elseif event == "ADDON_LOADED" then
         if arg1 == "Cell" then
-            EnhancedUpdateCellNicknames()
+            UpdateCellNicknames()
+        elseif arg1 == "MRT" then
+            InitializeMRT()
         end
     end
 end)

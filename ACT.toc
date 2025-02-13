@@ -3,11 +3,12 @@
 ## Author: Isogi, Jaf
 ## Notes: Advance Custom Tools
 ## SavedVariables: ACTDB
-## Version: 09941
+## Version: 09943
 ## IconTexture: Interface\AddOns\ACT\media\MiniMap.tga
-## OptionalDeps: ElvUI, WeakAuras, Cell, Grid2
+## OptionalDeps: ElvUI, WeakAuras, Cell, Grid2, MRT
 embeds.xml
 API.lua
 NicknameString.lua
+UI.lua
 Core.lua
 Nickname.lua
