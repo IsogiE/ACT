@@ -1,6 +1,10 @@
 local NicknameModule = {}
 
-NicknameModule.title = "Player Nicknames"
+NicknameModule.title = "Nicknames"
+
+function NicknameModule:GetConfigSize()
+    return 800, 600 
+end
 
 function NicknameModule:CreateConfigPanel(parent)
     if self.configPanel then
@@ -16,24 +20,23 @@ function NicknameModule:CreateConfigPanel(parent)
     configPanel:SetPoint("BOTTOMRIGHT", parent, "BOTTOMRIGHT", 0, 0)
 
     local importLabel = configPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    importLabel:SetPoint("TOPLEFT", configPanel, "TOPLEFT", 20, -20)
-    importLabel:SetText("Import Nicknames")
+    importLabel:SetPoint("TOPLEFT", configPanel, "TOPLEFT", 20, 16)
+    importLabel:SetText("Nicknames")
 
-    local importBox = CreateFrame("EditBox", nil, configPanel, "InputBoxTemplate")
-    importBox:SetMultiLine(true)
-    importBox:SetSize(520, 60) 
-    importBox:SetPoint("TOPLEFT", importLabel, "BOTTOMLEFT", 0, -10)
-    importBox:SetAutoFocus(false)
-    self.importBox = importBox
+    -- Create multiline edit box using UI helper
+    local importBoxFrame, importBoxEdit = UI:CreateMultilineEditBox(configPanel, 520, 40)
+    importBoxFrame:SetPoint("TOPLEFT", importLabel, "BOTTOMLEFT", 0, -10)
+    self.importBoxFrame = importBoxFrame
+    self.importBoxEdit = importBoxEdit
 
     local importButton = UI:CreateButton(configPanel, "Import", 120, 30)
-    importButton:SetPoint("TOPLEFT", importBox, "BOTTOMLEFT", 0, -10)
+    importButton:SetPoint("TOPLEFT", importBoxFrame, "BOTTOMLEFT", 0, -10)
 
     importButton:SetScript("OnClick", function()
-        local text = importBox:GetText()
+        local text = self.importBoxEdit:GetText()
         if text and text ~= "" then
             self:ProcessImportString(text)
-            importBox:SetText("")
+            self.importBoxEdit:SetText("")
             self:RefreshContent()
             self:PromptReload()
         end
@@ -67,19 +70,19 @@ function NicknameModule:CreateConfigPanel(parent)
     headerFrame:SetPoint("TOPLEFT", importButton, "BOTTOMLEFT", 0, -30)
     
     local nicknameHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    nicknameHeader:SetPoint("LEFT", headerFrame, "LEFT", 0, 0)
+    nicknameHeader:SetPoint("LEFT", headerFrame, "LEFT", 0, -10)
     nicknameHeader:SetText("Nickname")
     
     local charHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    charHeader:SetPoint("LEFT", headerFrame, "LEFT", 130, 0)
+    charHeader:SetPoint("LEFT", headerFrame, "LEFT", 113, -10)
     charHeader:SetText("Character Names")
     
     local actionsHeader = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    actionsHeader:SetPoint("LEFT", headerFrame, "LEFT", 350, 0)
+    actionsHeader:SetPoint("LEFT", headerFrame, "LEFT", 350, -10)
     actionsHeader:SetText("Actions")
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, configPanel, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetSize(520, 320) 
+    scrollFrame:SetSize(520, 320)
     scrollFrame:SetPoint("TOPLEFT", headerFrame, "BOTTOMLEFT", 0, -10)
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetSize(520, 320)
@@ -203,7 +206,6 @@ function NicknameModule:RefreshContent()
                             end
                         end
                         dropdown.selectedValue = newName
-                        UIDropDownMenu_SetText(dropdown, newName)
                         NicknameModule:RefreshContent()
                         NicknameModule:PromptReload()
                     end
@@ -223,7 +225,6 @@ function NicknameModule:RefreshContent()
                             break
                         end
                     end
-                    UIDropDownMenu_SetText(dropdown, "Select Character")
                     dropdown.selectedValue = nil
                     NicknameModule:RefreshContent()
                     NicknameModule:PromptReload()

@@ -1,7 +1,10 @@
-<Ui xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ..\FrameXML\UI.xsd">
-  <Script file="Libs\LibStub\LibStub.lua"/>
-  <Include file='Libs\AceEvent-3.0\AceEvent-3.0.xml'/>
-  <Include file='Libs\AceDB-3.0\AceDB-3.0.xml'/>
-  <Include file='Libs\AceDBOptions-3.0\AceDBOptions-3.0.xml'/>
-  <Include file='Libs\AceConsole-3.0\AceConsole-3.0.xml'/>
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+	<Script file="libs\LibStub\LibStub.lua"/>
+	<Script file="libs\CallbackHandler-1.0\CallbackHandler-1.0.lua"/>
+	<Script file="libs\LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
+	<Script file="libs\LibDeflate\LibDeflate.lua"/>
+	<Script file="libs\LibGetFrame-1.0\LibGetFrame-1.0.lua"/>
+	<Script file="libs\LibCustomGlow-1.0\LibCustomGlow-1.0.lua"/>
+	<Script file="libs\LibSerialize\LibSerialize.lua"/>
+	<Script file="libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua"/>
 </Ui>

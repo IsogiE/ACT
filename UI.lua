@@ -30,6 +30,127 @@ function UI:CreateButton(parent, text, width, height, onClickCallback)
     return button
 end
 
+-- Template: Read Only Box
+function UI:CreateReadOnlyBox(parent, width, height, defaultText)
+    local editBoxFrame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    editBoxFrame:SetSize(width, height)
+
+    editBoxFrame:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1
+    })
+    editBoxFrame:SetBackdropColor(0.1, 0.1, 0.1, 1)
+    editBoxFrame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+
+    local scrollFrame = CreateFrame("ScrollFrame", nil, editBoxFrame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", 5, -5)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -5, 5)
+
+    scrollFrame.ScrollBar:Hide()
+
+    local editBox = CreateFrame("EditBox", nil, scrollFrame)
+    editBox:SetMultiLine(true)
+    editBox:SetAutoFocus(false)
+    editBox:SetFontObject("GameFontHighlightSmall")
+    editBox:SetWidth(width - 10)
+    editBox:SetTextInsets(5, 5, 5, 5)
+    editBox:SetText(defaultText or "")
+    scrollFrame:SetScrollChild(editBox)
+
+    editBox:SetScript("OnEditFocusGained", function(self)
+        self:ClearFocus() 
+    end)
+    
+    editBox:SetScript("OnEnterPressed", function(self)
+        self:ClearFocus()
+    end)
+
+    editBox:SetScript("OnMouseDown", function(self)
+        if not self:IsMouseButtonDown() then
+            self:HighlightText()
+        end
+    end)
+
+    scrollFrame:EnableMouseWheel(true)
+    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local min, max = self.ScrollBar:GetMinMaxValues()
+        local curValue = self.ScrollBar:GetValue()
+        if delta > 0 then
+            self.ScrollBar:SetValue(math.max(curValue - 20, min))
+        else
+            self.ScrollBar:SetValue(math.min(curValue + 20, max))
+        end
+    end)
+
+    return editBoxFrame, editBox
+end
+
+-- Template: Multiline Edit Box
+function UI:CreateMultilineEditBox(parent, width, height, defaultText, onEnterPressed)
+    local editBoxFrame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    editBoxFrame:SetSize(width, height)
+
+    editBoxFrame:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1
+    })
+    editBoxFrame:SetBackdropColor(0.1, 0.1, 0.1, 1)
+    editBoxFrame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+
+    local scrollFrame = CreateFrame("ScrollFrame", nil, editBoxFrame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", 5, -5)
+    scrollFrame:SetPoint("BOTTOMRIGHT", -5, 5) 
+
+    scrollFrame.ScrollBar:Hide()
+
+    local editBox = CreateFrame("EditBox", nil, scrollFrame)
+    editBox:SetMultiLine(true)
+    editBox:SetAutoFocus(false)
+    editBox:SetFontObject("GameFontHighlightSmall")
+    editBox:SetWidth(width - 10) 
+    editBox:SetTextInsets(5, 5, 5, 5)
+    editBox:SetText(defaultText or "")
+    scrollFrame:SetScrollChild(editBox)
+
+    scrollFrame:EnableMouseWheel(true)
+    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local min, max = self.ScrollBar:GetMinMaxValues()
+        local curValue = self.ScrollBar:GetValue()
+        if delta > 0 then
+            self.ScrollBar:SetValue(math.max(curValue - 20, min))
+        else
+            self.ScrollBar:SetValue(math.min(curValue + 20, max))
+        end
+    end)
+
+    editBox:SetScript("OnEditFocusGained", function()
+        editBoxFrame:SetBackdropColor(0.2, 0.2, 0.2, 1)
+        editBoxFrame:SetBackdropBorderColor(0.6, 0.6, 0.6, 1)
+    end)
+
+    editBox:SetScript("OnEditFocusLost", function()
+        editBoxFrame:SetBackdropColor(0.1, 0.1, 0.1, 1)
+        editBoxFrame:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+    end)
+
+    editBox:SetScript("OnEnterPressed", function(self)
+        self:ClearFocus()
+        if onEnterPressed then
+            onEnterPressed(self:GetText())
+        end
+    end)
+
+    editBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+    end)
+
+    return editBoxFrame, editBox
+end
+
+
+
 -- Template: Dropdown
 local activeDropdown = nil  
 
