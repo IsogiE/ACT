@@ -30,7 +30,7 @@ function UI:CreateButton(parent, text, width, height, onClickCallback)
     return button
 end
 
--- Template: Read Only Box
+-- Template: Read Only Box (bricked atm)
 function UI:CreateReadOnlyBox(parent, width, height, defaultText)
     local editBoxFrame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     editBoxFrame:SetSize(width, height)
@@ -86,7 +86,7 @@ function UI:CreateReadOnlyBox(parent, width, height, defaultText)
     return editBoxFrame, editBox
 end
 
--- Template: Multiline Edit Box
+-- Template: (Multiline) Edit Box
 function UI:CreateMultilineEditBox(parent, width, height, defaultText, onEnterPressed)
     local editBoxFrame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     editBoxFrame:SetSize(width, height)
@@ -146,10 +146,18 @@ function UI:CreateMultilineEditBox(parent, width, height, defaultText, onEnterPr
         self:ClearFocus()
     end)
 
+    editBoxFrame:EnableMouse(true)
+    editBoxFrame:SetScript("OnMouseDown", function()
+        editBox:SetFocus()
+    end)
+    
+    scrollFrame:EnableMouse(true)
+    scrollFrame:SetScript("OnMouseDown", function()
+        editBox:SetFocus()
+    end)
+
     return editBoxFrame, editBox
 end
-
-
 
 -- Template: Dropdown
 local activeDropdown = nil  
@@ -186,7 +194,8 @@ function UI:CreateDropdown(parent, width, height)
     })
     dropdown.list:SetBackdropColor(0, 0, 0, 0.9)
     dropdown.list:SetBackdropBorderColor(0, 0, 0, 1)
-    dropdown.list:SetFrameStrata("TOOLTIP") 
+    dropdown.list:SetFrameStrata("HIGH") 
+    dropdown.list:SetFrameLevel(10)
     dropdown.list:Hide()
 
     dropdown.scrollFrame = CreateFrame("ScrollFrame", nil, dropdown.list, "UIPanelScrollFrameTemplate")
@@ -265,7 +274,6 @@ function UI:AddDropdownOption(dropdown, text, value, onClick)
     table.insert(dropdown.scrollChild.buttons, option)
 end
 
-
 function UI:SetDropdownOptions(dropdown, options)
     if dropdown.scrollChild.buttons then
         for _, btn in ipairs(dropdown.scrollChild.buttons) do
@@ -278,6 +286,32 @@ function UI:SetDropdownOptions(dropdown, options)
     for _, opt in pairs(options) do
         UI:AddDropdownOption(dropdown, opt.text, opt.value, opt.onClick)
     end
+end
+
+-- Template: Text Format
+function UI:CreateLabel(parent, text, fontSize, color, shadow, outline)
+    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    label:SetText(text)
+    label:SetFont("Fonts\\FRIZQT__.TTF", fontSize or 12)
+    
+    if shadow then
+        label:SetShadowColor(0, 0, 0, 1)
+        label:SetShadowOffset(1, -1)
+    end
+
+    if outline then
+        local outlineLabel = parent:CreateFontString(nil, "BACKGROUND", "GameFontNormal")
+        outlineLabel:SetText(text)
+        outlineLabel:SetFont("Fonts\\FRIZQT__.TTF", fontSize or 12)
+        outlineLabel:SetTextColor(0, 0, 0, 1)
+        outlineLabel:SetPoint("CENTER", label, "CENTER", 1, -1)
+    end
+    
+    if color then
+        label:SetTextColor(unpack(color))
+    end
+    
+    return label
 end
 
 _G["UI"] = UI

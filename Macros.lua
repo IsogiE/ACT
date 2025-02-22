@@ -22,7 +22,7 @@ function MacrosModule:CreateConfigPanel(parent)
     title:SetPoint("TOPLEFT", configPanel, "TOPLEFT", 20, 16)
     title:SetText("Macros")
 
-    local focusMacroFrame, focusMacroEditBox = UI:CreateMultilineEditBox(configPanel, 240, 70) -- 20% smaller
+    local focusMacroFrame, focusMacroEditBox = UI:CreateMultilineEditBox(configPanel, 240, 70)
     focusMacroFrame:SetPoint("TOPLEFT", 10, -90)
     self.focusMacroEdit = focusMacroEditBox
 

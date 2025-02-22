@@ -9,11 +9,9 @@ function VersionCheckerModule:GetConfigSize()
 end
 
 _G.VACT = _G.VACT or {}
-
 local VACT = _G.VACT 
 
 local versionCheckTimer = nil 
-
 local version = C_AddOns.GetAddOnMetadata("ACT", "Version")
 
 local function OnAddonLoaded(addonName)
@@ -43,6 +41,17 @@ local function compareVersions(v1, v2)
     return 0
 end
 
+local function formatVersion(ver)
+    ver = tostring(ver)
+    if ver:find("%.") then
+        return ver
+    elseif #ver == 2 then
+        return ver:sub(1,1) .. "." .. ver:sub(2,2)
+    else
+        return ver 
+    end
+end
+
 function VersionCheckerModule:SendVersionCheck()
     if not VACT.VersionCheck.version then
         return
@@ -68,13 +77,13 @@ end
 
 function VersionCheckerModule:OnCommReceived(prefix, message, distribution, sender)
     if prefix == "ADVANCEVERSION" then
-        local command, version = strsplit(":", message)
+        local command, ver = strsplit(":", message)
         local playerName = Ambiguate(sender, "mail")  
         if command == "VERSION_CHECK" then
-            VACT.VersionCheck.responses[playerName] = version
-            VersionCheckerModule:SendVersionResponse(playerName, version) 
+            VACT.VersionCheck.responses[playerName] = ver
+            VersionCheckerModule:SendVersionResponse(playerName, ver) 
         elseif command == "VERSION_RESPONSE" then
-            VACT.VersionCheck.responses[playerName] = version
+            VACT.VersionCheck.responses[playerName] = ver
             VersionCheckerModule:ShowResults()
         end
     end
@@ -100,31 +109,25 @@ end
 
 function VersionCheckerModule:ShowResults()
     local highestVersion = VACT.VersionCheck.version
-    for _, version in pairs(VACT.VersionCheck.responses) do
-        if compareVersions(version, highestVersion) > 0 then
-            highestVersion = version
+    for _, ver in pairs(VACT.VersionCheck.responses) do
+        if compareVersions(ver, highestVersion) > 0 then
+            highestVersion = ver
         end
-    end
-
-    local function formatVersion(version)
-        version = tostring(version)
-        return version:gsub("(%d)", "%1."):gsub("%.$", "")
     end
 
     local result = ""
-    for player, version in pairs(VACT.VersionCheck.responses) do
+    for player, ver in pairs(VACT.VersionCheck.responses) do
         local color
-        if version == "Addon not installed" then
+        if ver == "Addon not installed" then
             color = "|cff808080" 
         else
-            color = compareVersions(version, highestVersion) == 0 and "|cff00ff00" or "|cffff0000"
+            color = compareVersions(ver, highestVersion) == 0 and "|cff00ff00" or "|cffff0000"
             local vnum = C_AddOns.GetAddOnMetadata("ACT", "Version")
             local formatted_version = formatVersion(vnum)
-            version = formatted_version
+            ver = formatted_version
         end
         local displayName = Ambiguate(player, "short") 
-
-        result = result .. color .. displayName .. ": " .. version .. "|r\n"
+        result = result .. color .. displayName .. ": " .. ver .. "|r\n"
     end
     if self.configPanel and self.configPanel.resultFrame and self.configPanel.resultFrame.text then
         self.configPanel.resultFrame.text:SetText(result)
@@ -132,7 +135,6 @@ function VersionCheckerModule:ShowResults()
 end
 
 AceComm:RegisterComm("ADVANCEVERSION", function(...) VersionCheckerModule:OnCommReceived(...) end)
-
 
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")

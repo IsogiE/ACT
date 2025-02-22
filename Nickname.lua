@@ -23,7 +23,6 @@ function NicknameModule:CreateConfigPanel(parent)
     importLabel:SetPoint("TOPLEFT", configPanel, "TOPLEFT", 20, 16)
     importLabel:SetText("Nicknames")
 
-    -- Create multiline edit box using UI helper
     local importBoxFrame, importBoxEdit = UI:CreateMultilineEditBox(configPanel, 520, 40)
     importBoxFrame:SetPoint("TOPLEFT", importLabel, "BOTTOMLEFT", 0, -10)
     self.importBoxFrame = importBoxFrame
@@ -32,9 +31,20 @@ function NicknameModule:CreateConfigPanel(parent)
     local importButton = UI:CreateButton(configPanel, "Import", 120, 30)
     importButton:SetPoint("TOPLEFT", importBoxFrame, "BOTTOMLEFT", 0, -10)
 
+    local errorMsg = configPanel:CreateFontString(nil, "OVERLAY", "GameFontRed")
+    errorMsg:SetPoint("TOPLEFT", importButton, "BOTTOMLEFT", 0, -5)
+    errorMsg:SetText("")
+    self.importErrorMsg = errorMsg
+
     importButton:SetScript("OnClick", function()
         local text = self.importBoxEdit:GetText()
+        self.importErrorMsg:SetText("")
         if text and text ~= "" then
+            local conflict = self:CheckImportConflicts(text)
+            if conflict then
+                self.importErrorMsg:SetText("This character already has a nickname associated with it")
+                return
+            end
             self:ProcessImportString(text)
             self.importBoxEdit:SetText("")
             self:RefreshContent()
@@ -115,6 +125,45 @@ function NicknameModule:CreateConfigPanel(parent)
     self:RefreshContent()
 
     return configPanel
+end
+
+function NicknameModule:CheckImportConflicts(importString)
+    local newEntries = {}
+    for entry in string.gmatch(importString, "[^;]+") do
+        entry = strtrim(entry)
+        if entry ~= "" then
+            local nickname, characters = strsplit(":", entry)
+            if nickname and characters then
+                nickname = strtrim(nickname)
+                local normalizedNick = nickname:lower()
+                newEntries[normalizedNick] = newEntries[normalizedNick] or {}
+                for charName in string.gmatch(characters, "[^,]+") do
+                    charName = strtrim(charName)
+                    if charName ~= "" then
+                        table.insert(newEntries[normalizedNick], charName:lower())
+                    end
+                end
+            end
+        end
+    end
+
+    for existingNick, data in pairs(ACT.db.profile.nicknames) do
+        local normalizedExistingNick = existingNick:lower()
+        if data and data.characters then
+            for _, charData in ipairs(data.characters) do
+                local existingChar = charData.character:lower()
+                for newNick, charList in pairs(newEntries) do
+                    for _, importedChar in ipairs(charList) do
+                        if importedChar == existingChar and newNick ~= normalizedExistingNick then
+                            return true
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
 end
 
 function NicknameModule:RefreshContent()

@@ -18,7 +18,7 @@ function ACT:OpenConfig()
     local configFrame = CreateFrame("Frame", "ACT_ConfigFrame", UIParent)
     configFrame:SetSize(800, 600)
     configFrame:SetPoint("CENTER")
-    configFrame:SetFrameStrata("DIALOG")
+    configFrame:SetFrameStrata("HIGH")
     configFrame:EnableMouse(true)
     configFrame:SetMovable(true)
     configFrame:RegisterForDrag("LeftButton")
@@ -56,8 +56,14 @@ function ACT:OpenConfig()
 
     local function formatVersion(version)
         version = tostring(version)
-        return version:gsub("(%d)", "%1."):gsub("%.$", "")
-    end
+        if version:find("%.") then
+            return version
+        elseif #version == 2 then
+            return string.sub(version, 1, 1) .. "." .. string.sub(version, 2, 2)
+        else
+            return version:gsub("(%d)", "%1."):gsub("%.$", "")
+        end
+    end    
 
     local vnum = C_AddOns.GetAddOnMetadata("ACT", "Version")
     local formatted_version = formatVersion(vnum)
@@ -172,9 +178,10 @@ function ACT:OnInitialize()
             nicknames = {},
             splits = {
                 profiles = {},
-                KeepPosInGroup = true
+                KeepPosInGroup = true,
             },
             useNicknameIntegration = true,
+            weakauraUpdater = {},
         }
     }, true)
 
